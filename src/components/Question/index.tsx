@@ -1,3 +1,4 @@
+import Animated from 'react-native-reanimated';
 import { View, Text } from 'react-native';
 
 import { Option } from '../Option';
@@ -9,14 +10,19 @@ type QuestionProps = {
 }
 
 type Props = {
+  animatedStyle: {
+    transform: {
+      translateX: number;
+    }[];
+  }
   question: QuestionProps;
   alternativeSelected?: number | null;
   setAlternativeSelected?: (value: number) => void;
 }
 
-export function Question({ question, alternativeSelected, setAlternativeSelected }: Props) {
+export function Question({ animatedStyle, question, alternativeSelected, setAlternativeSelected }: Props) {
   return (
-    <View style={styles.container}>
+    <Animated.View style={[styles.container, animatedStyle]}>
       <Text style={styles.title}>
         {question.title}
       </Text>
@@ -31,6 +37,6 @@ export function Question({ question, alternativeSelected, setAlternativeSelected
           />
         ))
       }
-    </View>
+    </Animated.View>
   );
 }

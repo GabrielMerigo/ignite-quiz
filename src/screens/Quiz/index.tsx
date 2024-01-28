@@ -13,6 +13,7 @@ import { Question } from '../../components/Question';
 import { QuizHeader } from '../../components/QuizHeader';
 import { ConfirmButton } from '../../components/ConfirmButton';
 import { OutlineButton } from '../../components/OutlineButton';
+import { useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 
 interface Params {
   id: string;
@@ -26,6 +27,7 @@ export function Quiz() {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [quiz, setQuiz] = useState<QuizProps>({} as QuizProps);
   const [alternativeSelected, setAlternativeSelected] = useState<null | number>(null);
+  const offset = useSharedValue(0);
 
   const { navigate } = useNavigation();
 
@@ -69,8 +71,11 @@ export function Quiz() {
 
     if (quiz.questions[currentQuestion].correct === alternativeSelected) {
       setPoints(prevState => prevState + 1);
+    }else{
+      shakeAnimation();
     }
 
+    
     setAlternativeSelected(null);
   }
 
@@ -90,6 +95,21 @@ export function Quiz() {
     return true;
   }
 
+  const style = useAnimatedStyle(() => ({
+    transform: [{ translateX: offset.value }],
+  }));
+
+  function shakeAnimation() {
+    const OFFSET = 5;
+    const TIME = 100;
+
+    offset.value = withSequence(
+      withTiming(-OFFSET, { duration: TIME / 2 }),
+      withRepeat(withTiming(OFFSET, { duration: TIME }), 5, true),
+      withTiming(0, { duration: TIME / 2 })
+    );
+  }
+
   useEffect(() => {
     const quizSelected = QUIZ.filter(item => item.id === id)[0];
     setQuiz(quizSelected);
@@ -101,6 +121,7 @@ export function Quiz() {
       handleNextQuestion();
     }
   }, [points]);
+  
 
   if (isLoading) {
     return <Loading />
@@ -119,6 +140,7 @@ export function Quiz() {
         />
 
         <Question
+          animatedStyle={style}
           key={quiz.questions[currentQuestion].title}
           question={quiz.questions[currentQuestion]}
           alternativeSelected={alternativeSelected}

@@ -13,9 +13,10 @@ import { Question } from '../../components/Question';
 import { QuizHeader } from '../../components/QuizHeader';
 import { ConfirmButton } from '../../components/ConfirmButton';
 import { OutlineButton } from '../../components/OutlineButton';
-import Animated, { Extrapolate, interpolate, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
+import Animated, { Extrapolate, event, interpolate, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 import { ProgressBar } from '../../components/ProgressBar';
 import { THEME } from '../../styles/theme';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 
 interface Params {
   id: string;
@@ -32,6 +33,7 @@ export function Quiz() {
 
   const offset = useSharedValue(0);
   const scrollY = useSharedValue(0);
+  const cardPosition = useSharedValue(0);
 
   const { navigate } = useNavigation();
 
@@ -136,10 +138,20 @@ export function Quiz() {
   });
 
   const headerStyles = useAnimatedStyle(() => {
-    console.log(scrollY.value);
-
     return {
       opacity: interpolate(scrollY.value, [70, 90], [1, 0], Extrapolate.CLAMP)
+    }
+  })
+
+  const dragStyles = useAnimatedStyle(() => {
+    const CARD_INCLINATION = 10;
+    const rotateZ = cardPosition.value / CARD_INCLINATION;
+
+    return {
+      transform: [
+        { translateX: cardPosition.value },
+        { rotateZ: `${rotateZ}deg` }
+    ]
     }
   })
 
@@ -161,6 +173,19 @@ export function Quiz() {
     return <Loading />
   }
 
+  const onPan = Gesture
+    .Pan()
+    .onUpdate((event) => {
+      const moveToLeft = event.translationX < 0;
+
+      if (moveToLeft) {
+        cardPosition.value = event.translationX;
+      }
+    })
+    .onEnd(() => {
+      cardPosition.value = withTiming(0);
+    })
+
   return (
     <View style={styles.container}>
       <Animated.View style={fixedProgressBarStyles}>
@@ -179,6 +204,7 @@ export function Quiz() {
         onScroll={scrollHandler}
         scrollEventThrottle={16}
       >
+        
         <Animated.View style={[styles.header, headerStyles]}>
           <QuizHeader
             title={quiz.title}
@@ -186,14 +212,17 @@ export function Quiz() {
             totalOfQuestions={quiz.questions.length}
           />
         </Animated.View>
+        
 
-        <Question
-          animatedStyle={style}
-          key={quiz.questions[currentQuestion].title}
-          question={quiz.questions[currentQuestion]}
-          alternativeSelected={alternativeSelected}
-          setAlternativeSelected={setAlternativeSelected}
-        />
+        <GestureDetector gesture={onPan}>
+          <Question
+            animatedStyle={[style, dragStyles]}
+            key={quiz.questions[currentQuestion].title}
+            question={quiz.questions[currentQuestion]}
+            alternativeSelected={alternativeSelected}
+            setAlternativeSelected={setAlternativeSelected}
+          />
+        </GestureDetector>
 
         <View style={styles.footer}>
           <OutlineButton title="Parar" onPress={handleStop} />

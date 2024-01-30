@@ -13,7 +13,7 @@ import { Question } from '../../components/Question';
 import { QuizHeader } from '../../components/QuizHeader';
 import { ConfirmButton } from '../../components/ConfirmButton';
 import { OutlineButton } from '../../components/OutlineButton';
-import Animated, { Extrapolate, event, interpolate, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
+import Animated, { Extrapolate, interpolate, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming, runOnJS } from 'react-native-reanimated';
 import { ProgressBar } from '../../components/ProgressBar';
 import { THEME } from '../../styles/theme';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
@@ -23,6 +23,8 @@ interface Params {
 }
 
 type QuizProps = typeof QUIZ[0];
+
+const CARD_SKIP_AREA = (-200);
 
 export function Quiz() {
   const [points, setPoints] = useState(0);
@@ -175,6 +177,7 @@ export function Quiz() {
 
   const onPan = Gesture
     .Pan()
+    .activateAfterLongPress(50)
     .onUpdate((event) => {
       const moveToLeft = event.translationX < 0;
 
@@ -182,7 +185,11 @@ export function Quiz() {
         cardPosition.value = event.translationX;
       }
     })
-    .onEnd(() => {
+    .onEnd((event) => {
+      if(event.translationX < CARD_SKIP_AREA){
+        runOnJS(handleSkipConfirm)();
+      }
+
       cardPosition.value = withTiming(0);
     })
 
@@ -213,16 +220,14 @@ export function Quiz() {
           />
         </Animated.View>
         
-
-        <GestureDetector gesture={onPan}>
-          <Question
-            animatedStyle={[style, dragStyles]}
-            key={quiz.questions[currentQuestion].title}
-            question={quiz.questions[currentQuestion]}
-            alternativeSelected={alternativeSelected}
-            setAlternativeSelected={setAlternativeSelected}
-          />
-        </GestureDetector>
+        <Question
+          onPan={onPan}
+          animatedStyle={[style, dragStyles]}
+          key={quiz.questions[currentQuestion].title}
+          question={quiz.questions[currentQuestion]}
+          alternativeSelected={alternativeSelected}
+          setAlternativeSelected={setAlternativeSelected}
+        />
 
         <View style={styles.footer}>
           <OutlineButton title="Parar" onPress={handleStop} />

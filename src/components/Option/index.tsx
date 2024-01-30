@@ -1,22 +1,24 @@
-import { Text, TouchableOpacity, TouchableOpacityProps } from 'react-native';
+import { Text } from 'react-native';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 
 import { styles } from './styles';
 
-type Props = TouchableOpacityProps & {
+type OptionProps = {
   checked: boolean;
   title: string;
 }
 
-export function Option({ checked, title, ...rest }: Props) {
+export function Option({ checked, title }: OptionProps) {
+
   return (
     <TouchableOpacity
+      onPress={() => {}}
       style={
         [
           styles.container,
           checked && styles.checked
         ]
       }
-      {...rest}
     >
       <Text style={styles.title}>
         {title}

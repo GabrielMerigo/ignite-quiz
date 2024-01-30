@@ -124,6 +124,8 @@ export function Quiz() {
     }
   });
 
+  const isLongPressed = useSharedValue(false);
+
   const fixedProgressBarStyles= useAnimatedStyle(() => {
     return {
       zIndex: 1,
@@ -175,9 +177,21 @@ export function Quiz() {
     return <Loading />
   }
 
-  const onPan = Gesture
-    .Pan()
-    .activateAfterLongPress(50)
+  const onLongPress = Gesture.LongPress()
+    .minDuration(200)
+    .onStart(() => {
+      isLongPressed.value = true;
+    });
+
+  const onPan = Gesture.Pan()
+    .manualActivation(true)
+    .onTouchesMove((event, stateManager) => {
+      if (isLongPressed.value) {
+        stateManager.activate();
+      } else {
+        stateManager.fail();
+      }
+    })
     .onUpdate((event) => {
       const moveToLeft = event.translationX < 0;
 
@@ -192,6 +206,10 @@ export function Quiz() {
 
       cardPosition.value = withTiming(0);
     })
+    .onTouchesUp(() => {
+      isLongPressed.value = false;
+    });
+
 
   return (
     <View style={styles.container}>
@@ -220,14 +238,16 @@ export function Quiz() {
           />
         </Animated.View>
         
-        <Question
-          onPan={onPan}
-          animatedStyle={[style, dragStyles]}
-          key={quiz.questions[currentQuestion].title}
-          question={quiz.questions[currentQuestion]}
-          alternativeSelected={alternativeSelected}
-          setAlternativeSelected={setAlternativeSelected}
-        />
+        <GestureDetector gesture={Gesture.Simultaneous(onLongPress, onPan)} key={quiz.questions[currentQuestion].title}>
+          <Question
+            onPan={onPan}
+            animatedStyle={[style, dragStyles]}
+            question={quiz.questions[currentQuestion]}
+            alternativeSelected={alternativeSelected}
+            setAlternativeSelected={setAlternativeSelected}
+          />
+        </GestureDetector>
+      
 
         <View style={styles.footer}>
           <OutlineButton title="Parar" onPress={handleStop} />

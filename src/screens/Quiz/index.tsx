@@ -17,6 +17,7 @@ import Animated, { Extrapolate, interpolate, useAnimatedScrollHandler, useAnimat
 import { ProgressBar } from '../../components/ProgressBar';
 import { THEME } from '../../styles/theme';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
+import { OverlayFeedback } from '../../components/OverlayFeedback';
 
 interface Params {
   id: string;
@@ -31,6 +32,7 @@ export function Quiz() {
   const [isLoading, setIsLoading] = useState(true);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [quiz, setQuiz] = useState<QuizProps>({} as QuizProps);
+  const [statusReply, setStatusReply] = useState({ value: 0 });
   const [alternativeSelected, setAlternativeSelected] = useState<null | number>(null);
 
   const offset = useSharedValue(0);
@@ -78,8 +80,10 @@ export function Quiz() {
     }
 
     if (quiz.questions[currentQuestion].correct === alternativeSelected) {
+      setStatusReply({ value: 1 });
       setPoints(prevState => prevState + 1);
     }else{
+      setStatusReply({ value: 2 });
       shakeAnimation();
     }
 
@@ -213,6 +217,7 @@ export function Quiz() {
 
   return (
     <View style={styles.container}>
+      <OverlayFeedback status={statusReply} />
       <Animated.View style={fixedProgressBarStyles}>
         <Text style={styles.title}>{quiz.title}</Text>
 

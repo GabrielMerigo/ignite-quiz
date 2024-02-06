@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Alert, Text, View } from 'react-native';
+import { Alert, BackHandler, Text, View } from 'react-native';
 
 import { useNavigation, useRoute } from '@react-navigation/native';
 
@@ -18,6 +18,7 @@ import { ProgressBar } from '../../components/ProgressBar';
 import { THEME } from '../../styles/theme';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { OverlayFeedback } from '../../components/OverlayFeedback';
+import * as Haptics from 'expo-haptics'
 
 interface Params {
   id: string;
@@ -122,7 +123,9 @@ export function Quiz() {
     transform: [{ translateX: offset.value }],
   }));
 
-  function shakeAnimation() {
+  async function shakeAnimation() {
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+
     const OFFSET = 5;
     const TIME = 100;
 
@@ -186,6 +189,12 @@ export function Quiz() {
       handleNextQuestion();
     }
   }, [points]);
+
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', handleStop);
+
+    return () => backHandler.remove();
+  }, [])
   
 
   if (isLoading) {
